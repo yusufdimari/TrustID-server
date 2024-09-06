@@ -9,10 +9,12 @@ export interface DIDContractMethods {
     publicKey: string;
     serviceEndpoint: string;
   }): Promise<DIDDocument>;
+  deleteDID({ id }: { id: string }): Promise<DIDDocument | null>;
 }
 
 export interface DIDDocument {
   id: string;
   publicKey: string;
   serviceEndpoint: string;
+  [key: string]: string;
 }

@@ -29,7 +29,7 @@ router.get("/", async (req: Request, res: Response) => {
       return res.status(500).json({
         success: false,
         message: "Error retrieving DIDs from contract",
-        error: contractError, // Include the specific error message
+        error: contractError,
       });
     }
   } catch (error) {
@@ -83,8 +83,9 @@ router.get("/did/", async (req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   console.log(`Received request at ${req.url} with params: ${req.body}`);
+
   try {
-    const { account, near } = await initNear();
+    const { account } = await initNear();
     const { data } = req.body;
 
     if (!data || typeof data != "object" || Array.isArray(data)) {
@@ -121,6 +122,38 @@ router.post("/", async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });
+  }
+});
+
+router.delete("/", async (req: Request, res: Response) => {
+  console.log(`Received request at ${req.url}`);
+  const { id } = req.query;
+  if (!id) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide an ID",
+    });
+  }
+  const { account, near } = await initNear();
+
+  const contract = new NearContract(account, CONTRACT_NAME, {
+    viewMethods: ["getDID", "getAllDIDs"],
+    changeMethods: ["createDID", "updateDID", "deleteDID"],
+    useLocalViewExecution: false,
+  }) as Contract;
+  try {
+    const response = await contract.deleteDID({ id: id as string });
+    res.status(200).json({
+      success: true,
+      data: response,
+      message: "DID successfully deleted",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      data: error,
+      message: "Could not delete DID",
+    });
   }
 });
 
