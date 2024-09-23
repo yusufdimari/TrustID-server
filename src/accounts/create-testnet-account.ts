@@ -1,4 +1,5 @@
 import { connect, KeyPair, keyStores, utils } from "near-api-js";
+import { FinalExecutionOutcome } from "near-api-js/lib/providers";
 const path = require("path");
 const homedir = require("os").homedir();
 
@@ -33,19 +34,50 @@ export async function createAccount(
   const publicKey = keyPair.getPublicKey().toString();
   await keyStore.setKey(config.networkId, newAccountId, keyPair);
 
-  // return await creatorAccount.createAccount(
-  //   newAccountId,
-  //   publicKey,
-  //   BigInt(utils.format.parseNearAmount(amount) || 0)
-  // );
-  return await creatorAccount.functionCall({
-    contractId: "testnet",
-    methodName: "create_account",
-    args: {
-      new_account_id: newAccountId,
-      new_public_key: publicKey,
-    },
-    gas: BigInt("300000000000000"),
-    attachedDeposit: BigInt(utils.format.parseNearAmount(amount) || 0),
-  });
+  let res: {
+    data: FinalExecutionOutcome | null;
+    error: Error | string | null;
+  } = {
+    data: null,
+    error: null,
+  };
+  try {
+    const response = await creatorAccount.functionCall({
+      contractId: "testnet",
+      methodName: "create_account",
+      args: {
+        new_account_id: newAccountId + ".testnet",
+        new_public_key: publicKey,
+      },
+      gas: BigInt("300000000000000"),
+      attachedDeposit: BigInt(utils.format.parseNearAmount(amount) || 0),
+    });
+    if (response) {
+      const error = extractErrorMessage(response);
+      res = { data: response, error };
+    }
+  } catch (error: any) {
+    res.error = error;
+  }
+  return res;
+}
+
+function extractErrorMessage(response: any) {
+  // Iterate through the receipts to check for errors
+  for (const receipt of response.receipts_outcome) {
+    if (receipt.outcome.status && receipt.outcome.status.Failure) {
+      const error = receipt.outcome.status.Failure.ActionError.kind;
+      // Return the error message if available
+      if (error.AccountAlreadyExists) {
+        return `Username already taken: ${error.AccountAlreadyExists.account_id.replace(
+          ".testnet",
+          ""
+        )}`;
+      }
+      // Handle other potential error types here if needed
+      return `Error occurred: ${JSON.stringify(error)}`;
+    }
+  }
+
+  return null;
 }
