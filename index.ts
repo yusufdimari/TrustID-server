@@ -3,11 +3,11 @@ import cors from "cors";
 var admin = require("firebase-admin");
 
 const config = require("../credentials.json");
-import documents from "./routes/documents";
-import account from "./routes/account";
-import nft from "./routes/nft";
-import fileUpload from "./routes/fileUpload";
-import file from "./routes/file";
+import documents from "./src/routes/documents";
+import account from "./src/routes/account";
+import nft from "./src/routes/nft";
+import fileUpload from "./src/routes/fileUpload";
+import file from "./src/routes/file";
 
 const PORT = process.env.PORT || 5005;
 const BASE_URL = "/TrustID/v1";

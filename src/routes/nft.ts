@@ -98,7 +98,6 @@ router.get("/", async (req: Request, res: Response) => {
     changeMethods: ["nft_mint"],
     useLocalViewExecution: false,
   }) as Contract;
-  console.log(account_id);
   // Call the contract method and handle the response
   try {
     const result = await contract.nft_tokens_for_owner({
